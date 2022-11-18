@@ -44,5 +44,27 @@ for ext in $output; do
 
 done
 
+echo download all whl
+for ext in $output; do
+    echo
+
+    echo "Download extension:" $ext
+    url=$(python -c "from azure.cli.core.extension._resolve import  resolve_from_index;print(resolve_from_index('$ext')[0])")
+    echo Download $url
+    curl -sOL $url
+done
+
+echo start test
+for filename in *.whl; do
+    pip install $filename
+    pip check
+    if [ $? != 0 ]
+        then
+            echo "Dependency conflict detected:" $filename
+        fi
+    deactivate
+    rsync -au --delete "lib_backup/" "env/lib"
+    source env/bin/activate
+done
 
 exit $exit_code
